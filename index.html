@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+
+	<title>TypeScript 2.3+ Features</title>
+
+	<meta name="description" content="Features added in TypeScript 2.3, 2.4, and future features">
+	<meta name="author" content="Paul Shannon">
+
+	<meta name="apple-mobile-web-app-capable" content="yes"/>
+	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+
+	<meta name="viewport"
+		  content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+
+	<link rel="stylesheet" href="node_modules/reveal.js/css/reveal.css">
+	<link rel="stylesheet" href="node_modules/reveal.js/css/theme/sky.css" id="theme">
+
+	<!-- Code syntax highlighting -->
+	<link rel="stylesheet" href="node_modules/reveal.js/lib/css/zenburn.css">
+	<link rel="stylesheet" href="resources/main.css">
+
+	<link rel="shortcut icon" type="image/x-icon" href="favicon.ico"/>
+
+	<!-- Printing and PDF exports -->
+	<script>
+		var link = document.createElement('link');
+		link.rel = 'stylesheet';
+		link.type = 'text/css';
+		link.href = window.location.search.match(/print-pdf/gi) ? 'node_modules/reveal.js/css/print/pdf.css' : 'node_modules/reveal.js/css/print/paper.css';
+		document.getElementsByTagName('head')[0].appendChild(link);
+	</script>
+</head>
+
+<body>
+
+<div class="reveal">
+	<!-- Any section element inside of this container is displayed as a slide -->
+	<div class="slides">
+		<!-- TODO title -->
+		<section>
+			<h2>What's new in TypeScript?</h2>
+			<h3>TypeScript 2.3, 2.4, and the future</h3>
+		</section>
+
+		<section>
+			<h2>Hello!</h2>
+
+			<div class="two-column">
+				<div>
+					<h3>Paul Shannon</h3>
+					<img src="./images/sitepen.png" class="removeFormatting">
+				</div>
+				<div>
+					<ul>
+						<li>Sr Engineer @ SitePen</li>
+						<li>Co-maintainer of Intern</li>
+						<li>SitePen Podcast</li>
+						<li>Phoenix TypeScript</li>
+						<li class="github no-style"><a href="https://github.com/devpaul">devpaul</a></li>
+						<li class="twitter no-style"><a href="https://twitter.com/developerPaul">@developerPaul</a></li>
+					</ul>
+				</div>
+			</div>
+			<aside class="notes">
+				TODO add images to intern, podcast, phxts, github, twitter
+			</aside>
+		</section>
+
+		<section>
+			<p>The TypeScript group plans to continue to release a minor point release every two months</p>
+		</section>
+
+		<section>
+			<h2>New in 2.3</h2>
+		</section>
+
+		<section>
+			<ul>
+				<li>Down-emitting support for generators</li>
+				<li>Async iterators and generators</li>
+				<li>Generic default types</li>
+				<li>Strongly-typed this in object literals</li>
+				<li>A new <i>--strict</i> compile option</li>
+				<li>A new <i>--checkJs</i> compile option</li>
+				<li>Improved JSX support</li>
+			</ul>
+		</section>
+
+		<section>
+			<h3>Down-emitted generators</h3>
+
+			<pre><code class="typescript" data-trim data-noescape>
+				function* count(max: number) {
+					for (let i = 0; i < max; i++) {
+						yield i;
+					}
+				}
+			</code></pre>
+
+			<p>generators are now down-emitted into ES3/ES5 with <i>--downlevelIteration</i></p>
+		</section>
+
+		<section>
+			<h3>Async iterators and generators</h3>
+
+			<ul>
+				<li>Currently a Stage 3 proposal</li>
+				<li>Adds Symbol.asyncIterator</li>
+				<li>Adds for-await-of loop</li>
+				<li>Adds an async generator</li>
+			</ul>
+		</section>
+
+		<section>
+			<h3>Async generator</h3>
+
+			<pre><code class="typescript" data-trim data-noescape>
+				async function* getRecords(start: number, end: number): object {
+					for (let i = start; i < end; i++) {
+						const myRequest = new Request(`http://example.org/record/${ i }`);
+						const response = await fetch(request);
+						if (response.status === 200) {
+							yield response.json();
+						}
+						else {
+							throw new Error();
+						}
+					}
+				}
+			</code></pre>
+		</section>
+
+		<section>
+			<h3>for - async - of</h3>
+
+			<pre><code class="typescript" data-trim data-noescape>
+				for async (let record of getRecords(0, 4)) {
+					console.log(record);
+				}
+			</code></pre>
+		</section>
+
+		<section>
+			<h3>Symbol.asyncIterator</h3>
+
+			<pre><code class="typescript" data-trim data-noescape>
+				class Records {
+					start: number;
+					end: number;
+
+					constructor(start: number, end: number) {
+						this.start = start;
+						this.end = end;
+					}
+
+					[Symbol.asyncIterator]() {
+						return records(this.start, this.end);
+					}
+				}
+			</code></pre>
+
+			<pre><code class="typescript" data-trim data-noescape>
+				for async (let record of new Records(0, 4)) {
+					console.log(record);
+				}
+			</code></pre>
+		</section>
+
+		<section>
+			<h3>Generic defaults</h3>
+
+			<pre><code class="typescript" data-trim data-noescape>
+				interface Mappable {
+					map(method: (value: number) => number);
+				}
+
+				export function double&lt;T extends Mappable = Float32Array&gt;(list: T): T {
+					return list.map(value => 2 * value);
+				}
+
+				double(new Float32Array([0, 1, 2]));
+				double&lt;number[]&gt;([0, 1, 2]);
+			</code></pre>
+		</section>
+
+		<section>
+			<h3>checkJs Compiler Option</h3>
+
+			<p>Instructs TypeScript to validate compiled JavaScript using known types
+			and information from TypeDoc</p>
+
+			<pre><code class="bash" data-trim data-noescape>
+				tsc --checkJs --allowJs --outDir . src/checkjs.js
+			</code></pre>
+
+			<p>Useful for migrating JavaScript projects to TypeScript</p>
+		</section>
+
+		<section>
+			<h3>strict Compiler Option</h3>
+
+			<p>Includes all of the best-practice restrictions</p>
+
+			<ul>
+				<li>strictNullChecks</li>
+				<li>noImplicitAny</li>
+				<li>noImplicitThis</li>
+				<li>alwaysStrict</li>
+			</ul>
+
+			<aside class="notes">
+				<ul>
+					<li>strictNullChecks - null and undefined are not in every type</li>
+					<li>noImplicitAny - any isn't assumed</li>
+					<li>noImplicitThis - this must be declared</li>
+					<li>alwaysStrict - "use strict"</li>
+				</ul>
+			</aside>
+		</section>
+
+		<section>
+			<h3>Strongly-typed <i>this</i></h3>
+
+			<p>Object literals used to use the any type for <i>this</i></p>
+
+			<p>This forced code with <i>noImplicitThis</i> to explicitly define <i>this</i></p>
+
+			<pre><code class="typescript" data-trim data-noescape>
+				const obj = {
+					x: 'tacos',
+
+					method() {
+						// error TS2322: Type '1' is not assignable to type 'string'.
+						this.x = 1;
+					}
+				};
+			</code></pre>
+		</section>
+
+		<section>
+			<h2>New in 2.4</h2>
+		</section>
+
+		<section>
+			<ul>
+				<li>Inferring generics</li>
+				<li>String-value enums</li>
+				<li>Weak type detection</li>
+				<li>ES9 <i>import()</i> support</li>
+			</ul>
+		</section>
+
+		<section>
+			<h3>Inferring generics</h3>
+
+			<p>Generics now infer the proper type from return types and parameters</p>
+		</section>
+
+		<section>
+			<p>Inferring return types</p>
+
+			<pre><code class="typescript" data-trim data-noescape>
+				let promise: Promise&lt;string&gt;;
+				promise = new Promise(resolve => {
+					resolve(10);  // error
+				});
+			</code></pre>
+
+			<pre><code class="typescript" data-trim data-noescape>
+				let promise: Promise&lt;number&gt;;
+				promise = new Promise&lt;number | string&gt;(resolve => {
+					const value = Math.random() > 0.5 ? 'ten' : 10;
+					resolve(value);
+				});
+			</code></pre>
+		</section>
+
+		<section>
+			<h3>String-value enums</h3>
+
+			<pre><code class="typescript" data-trim data-noescape>
+				enum State {
+					Started = 'started',
+					Stopped = 'stopped',
+				}
+
+				const node = document.querySelector('input');
+
+				if (node.value === State.Started) {
+					// do something interesting
+				}
+				else if (node.value === State.Stopped) {
+					// stop playback
+				}
+			</code></pre>
+		</section>
+
+		<section>
+			<h3>Weak type detection</h3>
+
+			<p>Weak types are any object that contains all optional properties</p>
+
+			<pre><code class="typescript" data-trim data-noescape>
+				interface Person {
+					name?: string;
+					age?: number;
+					description?: string;
+				}
+			</code></pre>
+		</section>
+
+		<section>
+			<p>TypeScript now produces an error when a weak type is used and none of its properties are defined</p>
+
+			<pre><code class="typescript" data-trim data-noescape>
+				function saveUserRecord(person: Person) {
+					// save the record
+				}
+
+				const user = {
+					firstName: 'Paul',
+					lastName: 'Shannon',
+					birthDate: new Date()
+				};
+
+				// error TS2559: Type has no properties in common with type 'Person'.
+				saveUserRecord(user);
+			</code></pre>
+		</section>
+
+		<section>
+			<h3>ES9 <i>import()</i></h3>
+
+			<p>import() is an ESnext feature allowing dynamic loading of modules</p>
+
+			<pre><code class="typescript" data-trim data-noescape>
+				class Application {
+					async showLoginView() {
+						try {
+							const LoginView = await import('loginview.js');
+							const node = document.querySelector('.application');
+							new LoginView(node);
+						}
+						catch (e) {
+							alert('failed to load LoginView');
+						}
+					}
+				}
+			</code></pre>
+		</section>
+
+		<section>
+			<h3>Future TypeScript</h3>
+		</section>
+
+		<section>
+			<ul>
+				<li><a href="https://github.com/Microsoft/TypeScript/issues/3469">Support for project references</a></li>
+				<li><a href="https://github.com/Microsoft/TypeScript/issues/5579">Type checking for computed properties</a></li>
+				<li><a href="https://github.com/Microsoft/TypeScript/issues/4433">Flattened declarations</a></li>
+				<li>Design-time decorators for <a href="https://github.com/Microsoft/TypeScript/issues/4433">Conditional includes</a>,
+					<a href="https://github.com/Microsoft/TypeScript/issues/2900">Deprecated, and supress warnings</a></li>
+			</ul>
+		</section>
+
+		<section>
+			<h3>Resources</h3>
+
+			<ul>
+				<li><a href="https://github.com/tc39/proposals">TC39 Proposals</a></li>
+				<li><a href="https://blogs.msdn.microsoft.com/typescript/">TypeScript Blog</a></li>
+				<li><a href="https://github.com/Microsoft/TypeScript/wiki/Roadmap">TypeScript Roadmap</a></li>
+			</ul>
+		</section>
+	</div>
+</div>
+
+<script src="node_modules/reveal.js/lib/js/head.min.js"></script>
+<script src="node_modules/reveal.js/js/reveal.js"></script>
+<script src="src/index.js"></script>
+
+</body>
+</html>
